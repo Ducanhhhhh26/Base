@@ -1,246 +1,154 @@
-# HƯỚNG DẪN TRIỂN KHAI VÀ KIỂM THỬ DỰ ÁN (ĐỀ 001 - QUẢN LÝ PHÒNG LAB)
+# HƯỚNG DẪN TRIỂN KHAI VÀ ĐÁNH DẤU TỪNG PHẦN THEO ĐỀ BÀI (ĐỀ 001 - QUẢN LÝ PHÒNG LAB)
 
 > **Dự án**: Hệ thống quản lý phòng Lab - DevOps Final  
-> **Sinh viên**: Nguyễn Đức Anh  
-> **Mã sinh viên**: B24DTCN184  
-> **Lớp**: K24CNTT2  
-> **Cổng truy cập cá nhân**: `8081`  
-> **Tên Project Compose**: `ducanh-de001`  
+> **Sinh viên**: Nguyễn Đức Anh | **Mã SV**: B24DTCN184 | **Lớp**: K24CNTT2  
+> **Cổng truy cập cá nhân**: `8081` | **Compose Project**: `ducanh-de001`  
 > **GitHub Repository**: [https://github.com/Ducanhhhhh26/Base.git](https://github.com/Ducanhhhhh26/Base.git)  
 
 ---
 
-## ⚠️ LƯU Ý SỬA LỖI: `couldn't find env file: /home/danh/student.env`
-Lỗi này xảy ra do bạn đang đứng ở thư mục gốc `/home/danh` (`~`) mà **chưa chuyển vào thư mục code (`cd Base`)**.  
-Hãy làm đúng theo quy trình từng bước từ đầu dưới đây!
+## 📌 BẢNG ĐỐI CHIẾU CÁC PHẦN ĐỀ BÀI VÀ THANG ĐIỂM (100 ĐIỂM)
+
+| Phần trong đề thi | Thang điểm | Ảnh đề bài | Tệp tin & Lệnh thực hiện tương ứng |
+| :--- | :---: | :---: | :--- |
+| **Phần 1: Khởi tạo repo & điền thông tin** | **10 điểm** | **Ảnh 2, Ảnh 5** | - Tạo Git repo public, nhánh `main`<br>- File `student.env` đã điền đủ thông tin |
+| **Phần 2: Dockerfile multi-stage cho backend** | **25 điểm** | **Ảnh 3, Ảnh 6** | - File `Dockerfile` (Stage 1 Gradle build cache, Stage 2 JRE 21 non-root `spring`) |
+| **Phần 3: Hoàn thiện `docker-compose.yml`** | **20 điểm** | **Ảnh 4, Ảnh 6, Ảnh 7** | - File `docker-compose.yml` (TODO 1–5: app, mysql, nginx, port `8081:80`)<br>- Chạy `docker compose --env-file student.env up -d --build` |
+| **Phần 4: Pipeline CI/CD GitHub Actions** | **35 điểm** | **Ảnh 7, Ảnh 8, Ảnh 9** | - Mục 4.1: Tạo SSH key & 3 Secrets (`SERVER_HOST`, `SERVER_USER`, `SERVER_SSH_KEY`)<br>- Mục 4.2: File `.github/workflows/ci-cd.yml`<br>- Mục 4.3: Push lên `main`, kích hoạt pipeline tự động build & deploy |
+| **Phần 5: Nộp minh chứng** | **10 điểm** | **Ảnh 9, Ảnh 10** | - 4 ảnh chụp minh chứng lưu vào `screenshots/`<br>- Copy vào `submission-content/` để nộp |
 
 ---
 
-## MỤC LỤC
-1. [Quy trình chạy lại từ đầu trên máy ảo (VM) - TỪNG BƯỚC](#1-quy-trình-chạy-lại-từ-đầu-trên-máy-ảo-vm---từng-bước)
-2. [Kiểm tra API và Website](#2-kiểm-tra-api-và-website)
-3. [Cấu hình SSH và GitHub Actions (CI/CD Deploy)](#3-cấu-hình-ssh-và-github-actions-cicd-deploy)
-4. [Hướng dẫn chụp 4 ảnh minh chứng nộp bài (Phần 5 - 10 điểm)](#4-hướng-dẫn-chụp-4-ảnh-minh-chứng-nộp-bài-phần-5---10-điểm)
-5. [Các lệnh hữu ích và xử lý sự cố](#5-các-lệnh-hữu-ích-và-xử-lý-sự-cố)
+## 🛠️ CHI TIẾT TỪNG PHẦN THEO ĐỀ BÀI VÀ CÁC BƯỚC THỰC HIỆN
 
 ---
 
-## 1. Quy trình chạy lại từ đầu trên máy ảo (VM) - TỪNG BƯỚC
+### [PHẦN 1 - 10 ĐIỂM] KHỞI TẠO REPOSITORY & ĐIỀN THÔNG TIN SINH VIÊN
+*(Đối chiếu: **Ảnh 2, Ảnh 5** trong đề thi)*
 
-Mở terminal máy ảo hoặc SSH vào máy ảo (bạn sẽ thấy prompt dạng `danh@Server:~$`).
-
-### Bước 1: Dọn dẹp thư mục cũ (nếu có) để làm mới hoàn toàn
-Chạy lệnh sau tại `danh@Server:~$`:
-```bash
-rm -rf Base devops-final-app-de001
-```
-
----
-
-### Bước 2: Clone repository mới nhất từ GitHub
-```bash
-git clone https://github.com/Ducanhhhhh26/Base.git
-```
-
----
-
-### Bước 3: BẮT BUỘC - Chuyển vào thư mục dự án `Base`
-> 🔴 **CỰC KỲ QUAN TRỌNG**: Bạn phải gõ lệnh `cd Base` thì Docker mới nhìn thấy file `student.env` và `docker-compose.yml`.
-
-```bash
-cd Base
-```
-*Lúc này terminal sẽ hiển thị prompt:* `danh@Server:~/Base$`
+- **Yêu cầu đề bài**:
+  1. Tạo repository GitHub public, đưa toàn bộ mã nguồn lên nhánh `main`.
+  2. Điền đầy đủ file `student.env`: thông tin cá nhân, `APP_PORT` cá nhân (>= 8080), `COMPOSE_PROJECT_NAME` theo dạng `<tên-viết-tắt>-de001` (viết thường), tài khoản/mật khẩu MySQL. Giữ nguyên `EXAM_CODE="001"` và `MYSQL_DATABASE="ptit_lab_db"`.
+- **Trạng thái đã hoàn thành trong code**:
+  - Repo GitHub: `https://github.com/Ducanhhhhh26/Base.git` (nhánh `main`).
+  - File `student.env` đã điền:
+    - `STUDENT_NAME="Nguyễn Đức Anh"`
+    - `STUDENT_ID="B24DTCN184"`
+    - `STUDENT_CLASS="K24CNTT2"`
+    - `STUDENT_EMAIL="ducanhcualo2403@gmail.com"`
+    - `GITHUB_USERNAME="Ducanhhhhh26"`
+    - `APP_PORT="8081"`
+    - `COMPOSE_PROJECT_NAME="ducanh-de001"`
+    - `MYSQL_DATABASE="ptit_lab_db"`, `MYSQL_USER="app_user"`, `MYSQL_PASSWORD="AppPass@2026"`, `MYSQL_ROOT_PASSWORD="RootPass@2026"`.
 
 ---
 
-### Bước 4: Kiểm tra danh sách file trong thư mục
-```bash
-ls -la
-```
-**Kết quả mong đợi**: Bạn sẽ thấy danh sách các file:
-- `student.env`
-- `docker-compose.yml`
-- `Dockerfile`
-- `build.gradle`
-- `nginx/`
-- `database/`
-- `src/`
+### [PHẦN 2 - 25 ĐIỂM] DOCKERFILE MULTI-STAGE CHO BACKEND
+*(Đối chiếu: **Ảnh 3, Ảnh 6** trong đề thi)*
+
+- **Yêu cầu đề bài**:
+  - **Stage 1 (build)**: Base image `gradle:8.14-jdk21-alpine AS build`. Copy `build.gradle` và `settings.gradle` trước để chạy `gradle dependencies` nhằm tận dụng cache layer; sau đó mới copy thư mục `src/` và build file jar bằng lệnh `gradle bootJar -x test`.
+  - **Stage 2 (runtime)**: Base image chỉ có JRE 21 (`eclipse-temurin:21-jre-alpine`). Copy file `app.jar` từ stage build. Chạy bằng user thường (non-root `spring`). Nhận `ARG APP_VERSION` gán vào `ENV APP_VERSION`. Mở cổng `EXPOSE 8080`, ENTRYPOINT dạng exec `["java", "-jar", "/app/app.jar"]`.
+- **Trạng thái đã hoàn thành trong code**:
+  - Đã cấu hình chuẩn 100% đúng cấu trúc trong file `Dockerfile`.
 
 ---
 
-### Bước 5: Build và khởi động toàn bộ hệ thống
-Chạy lệnh:
-```bash
-docker compose --env-file student.env up -d --build
-```
+### [PHẦN 3 - 20 ĐIỂM] HOÀN THIỆN `docker-compose.yml` & CHẠY THỬ TRÊN MÁY ẢO
+*(Đối chiếu: **Ảnh 4, Ảnh 6, Ảnh 7** trong đề thi)*
 
-> **Giải thích**:  
-> - Docker sẽ tải base image `gradle:8.14-jdk21-alpine`, build mã nguồn Spring Boot ra file `app.jar`.  
-> - Sau đó tạo container `app` (chạy JRE 21 với user non-root `spring`), container `mysql:8.0` và container `nginx:1.27-alpine`.  
-> - Quá trình build lần đầu có thể mất từ 1 - 2 phút để tải dependencies, hãy kiên nhẫn chờ đến khi có thông báo `Started` cho cả 3 container.
+- **Yêu cầu đề bài**:
+  - Service `mysql`: Đã có sẵn mạng `db-net`, volume `mysql_data`, healthcheck ping và mount file `database/init.sql`. KHÔNG public cổng MySQL ra ngoài máy chủ.
+  - Service `app`:
+    - **TODO 1**: Build từ thư mục gốc, build-arg `APP_VERSION: ${APP_VERSION:-local}`.
+    - **TODO 2**: Image `${APP_IMAGE:-devops-final-app}:${APP_TAG:-latest}`.
+    - **TODO 3**: Biến môi trường database đọc từ `student.env` (`${MYSQL_DATABASE}`, `${MYSQL_USER}`, `${MYSQL_PASSWORD}`).
+    - `depends_on: mysql: condition: service_healthy`.
+  - Service `nginx`:
+    - **TODO 4**: Publish cổng cá nhân `${APP_PORT}:80` (cổng 8081 map ra 80 của container).
+    - **TODO 5**: Mount cấu hình `./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro`.
 
----
+#### ▶ Hướng dẫn thao tác chạy trên máy ảo (VM):
 
-### Bước 6: Kiểm tra trạng thái các container
-```bash
-docker compose --env-file student.env ps
-```
+1. **Chuẩn bị quyền Docker (chỉ cần chạy 1 lần trên máy ảo)**:
+   ```bash
+   sudo usermod -aG docker $USER
+   newgrp docker
+   ```
+   *(Nếu cần, chạy thêm `sudo chmod 666 /var/run/docker.sock`)*.
 
-**Kết quả mong đợi**: Cả 3 container đều có trạng thái `Up`:
-- `ducanh-de001-mysql-1`: `Up (healthy)`
-- `ducanh-de001-app-1`: `Up`
-- `ducanh-de001-nginx-1`: `Up ... 0.0.0.0:8081->80/tcp`
+2. **Clone mã nguồn về máy ảo**:
+   ```bash
+   git clone https://github.com/Ducanhhhhh26/Base.git
+   cd Base
+   ```
+   *(Phải `cd Base` để vào thư mục chứa `student.env`)*.
 
-📸 **CHỤP ẢNH MINH CHỨNG 3**:  
-Chụp toàn bộ cửa sổ terminal hiển thị lệnh `docker compose --env-file student.env ps` và bảng trạng thái 3 container để lưu thành:  
-`screenshots/03-compose-ps.png`
+3. **Chạy lệnh khởi động theo đúng đề bài (Ảnh 7)**:
+   ```bash
+   docker compose --env-file student.env up -d --build
+   ```
 
----
+4. **Kiểm tra trạng thái các container (Ảnh 7, Ảnh 10)**:
+   ```bash
+   docker compose --env-file student.env ps
+   ```
+   - Cả 3 container `mysql` (healthy), `app`, `nginx` đều ở trạng thái `Up`.
+   - 📸 **Lấy ảnh minh chứng**: Chụp màn hình kết quả này lưu thành `screenshots/03-compose-ps.png`.
 
-## 2. Kiểm tra API và Website
-
-### 2.1. Kiểm tra trực tiếp trên máy ảo bằng `curl`
-
-1. **Kiểm tra API lấy danh sách phòng Lab**:
+5. **Kiểm tra API dữ liệu (Ảnh 7, Ảnh 10)**:
    ```bash
    curl http://localhost:8081/api/labs
    ```
-   **Kết quả trả về**: Chuỗi JSON gồm 8 phòng lab:
-   ```json
-   [{"id":1,"labName":"DevOps Lab","building":"A1","capacity":40,"equipment":"Máy chủ Dell R740, Switch Cisco","status":"Hoạt động",...}, ...]
-   ```
-
-2. **Kiểm tra redirect từ trang chủ `/`**:
-   ```bash
-   curl -I http://localhost:8081/
-   ```
-   **Kết quả trả về**: `HTTP/1.1 302 Moved Temporarily` và `Location: /api/labs`.
+   - Trả về JSON 8 phòng Lab.
+   - Mở trình duyệt trên máy thật: truy cập `http://<IP_MÁY_ẢO>:8081` hiển thị danh sách phòng lab.
+   - 📸 **Lấy ảnh minh chứng**: Chụp ảnh màn hình trình duyệt lưu thành `screenshots/04-website.png`.
 
 ---
 
-### 2.2. Kiểm tra trên trình duyệt từ máy tính thật (Windows)
+### [PHẦN 4 - 35 ĐIỂM] PIPELINE CI/CD VỚI GITHUB ACTIONS
+*(Đối chiếu: **Ảnh 7, Ảnh 8, Ảnh 9** trong đề thi)*
 
-1. Xem địa chỉ IP của máy ảo:
-   ```bash
-   hostname -I
-   # hoặc
-   ip a
-   ```
-   *(Ví dụ IP máy ảo là `192.168.1.50` hoặc IP public nếu dùng Cloud/Server trường)*.
+- **Yêu cầu đề bài**:
+  - **4.1. Chuẩn bị kết nối server (Ảnh 7)**:
+    - Tạo khóa SSH: `ssh-keygen -t ed25519 -f deploy_key -N ""`
+    - Đưa public key vào `~/.ssh/authorized_keys` trên máy ảo/server.
+    - Cấu hình 3 GitHub Secrets: `SERVER_HOST`, `SERVER_USER`, `SERVER_SSH_KEY`.
+  - **4.2. Hoàn thiện `.github/workflows/ci-cd.yml` (Ảnh 8, Ảnh 9)**:
+    - **TODO 1**: Build và khởi động bằng `docker compose --env-file student.env up -d --build --wait --wait-timeout 300`.
+    - **TODO 2**: Đăng nhập GHCR bằng `github.actor` và `secrets.GITHUB_TOKEN`.
+    - **TODO 3**: Push image lên GHCR với 2 tag: commit SHA (`${{ github.sha }}`) và `latest`.
+    - **TODO 4**: Job `deploy` chỉ chạy khi job `build` thành công (`needs: build`).
+    - **TODO 5 / TODO 6**: Kết nối SSH bằng các secret `SERVER_HOST`, `SERVER_USER`, `SERVER_SSH_KEY`.
+    - **TODO 6 / TODO 7**: Trên server pull image mới của service `app` và chạy `docker compose --env-file student.env up -d --no-build --wait --wait-timeout 300` (KHÔNG build trên server).
+  - **4.3. Chạy pipeline & kiểm tra (Ảnh 9)**:
+    - Push lên `main`: Tab Actions trên GitHub hiển thị cả 2 job `build` và `deploy` thành công tích xanh.
+    - Mở `http://<IP_máy_chủ>:8081`: hiển thị danh sách phòng lab.
 
-2. Mở trình duyệt Web trên Windows (Chrome / Edge), nhập địa chỉ:
-   ```
-   http://<IP_MÁY_ẢO>:8081
-   ```
-   hoặc:
-   ```
-   http://<IP_MÁY_ẢO>:8081/api/labs
-   ```
-
-3. Màn hình trình duyệt sẽ hiển thị toàn bộ JSON dữ liệu các phòng lab.
-
-📸 **CHỤP ẢNH MINH CHỨNG 4**:  
-Chụp ảnh toàn màn hình trình duyệt hiển thị rõ thanh địa chỉ URL `http://<IP_MÁY_ẢO>:8081` và dữ liệu JSON để lưu thành:  
-`screenshots/04-website.png`
-
----
-
-## 3. Cấu hình SSH và GitHub Actions (CI/CD Deploy)
-
-Pipeline CI/CD nằm ở file `.github/workflows/ci-cd.yml` sẽ tự động:
-1. `build`: Build test, smoke test, đóng gói và push Docker Image lên GitHub Container Registry (`ghcr.io`).
-2. `deploy`: SSH vào máy ảo/server, pull image mới về và chạy mà không build lại trên server.
-
-### Bước 3.1: Tạo khóa SSH Deploy Key trên máy ảo
-Trên máy ảo, chạy:
-```bash
-# Tạo cặp khóa SSH (ấn Enter nếu được hỏi)
-ssh-keygen -t ed25519 -f deploy_key -N ""
-
-# Thêm khóa công khai vào danh sách authorized_keys
-mkdir -p ~/.ssh
-chmod 700 ~/.ssh
-cat deploy_key.pub >> ~/.ssh/authorized_keys
-chmod 600 ~/.ssh/authorized_keys
-
-# In nội dung private key ra màn hình để copy
-cat deploy_key
-```
-
-### Bước 3.2: Thêm 3 Secrets vào GitHub Repository
-1. Mở repository trên trình duyệt: [https://github.com/Ducanhhhhh26/Base](https://github.com/Ducanhhhhh26/Base)
-2. Chọn **Settings** -> **Secrets and variables** -> **Actions** -> bấm **New repository secret**.
-3. Thêm lần lượt 3 secret:
-   - `SERVER_HOST`: Địa chỉ IP của máy ảo / server (IP có thể SSH được).
-   - `SERVER_USER`: `danh` (tài khoản SSH trên máy ảo).
-   - `SERVER_SSH_KEY`: Copy toàn bộ nội dung hiển thị từ lệnh `cat deploy_key` ở trên (từ `-----BEGIN OPENSSH PRIVATE KEY-----` đến `-----END OPENSSH PRIVATE KEY-----`).
-
-### Bước 3.3: Bật quyền ghi cho GitHub Packages (GHCR)
-1. Trong repo, vào **Settings** -> **Actions** -> **General**.
-2. Cuộn xuống mục **Workflow permissions**.
-3. Chọn **Read and write permissions**.
-4. Bấm **Save**.
-
-### Bước 3.4: Chạy Pipeline
-Mỗi khi có commit push lên nhánh `main`:
-1. Vào tab **Actions** trên GitHub để theo dõi 2 job `build` và `deploy`.
-2. Khi cả 2 job hiện tích xanh ✅:
-
-📸 **CHỤP ẢNH MINH CHỨNG 1**:  
-Chụp màn hình tab Actions hiển thị lần chạy thành công cả 2 jobs `build` và `deploy` để lưu thành:  
-`screenshots/01-actions.png`
-
-📸 **CHỤP ẢNH MINH CHỨNG 2**:  
-Vào mục **Packages** trên GitHub (trang profile hoặc repo), xem package image `app` có hiển thị 2 tag `latest` và commit SHA. Chụp màn hình để lưu thành:  
-`screenshots/02-ghcr.png`
+#### ▶ Các bước thiết lập trên GitHub:
+1. Vào repo GitHub `https://github.com/Ducanhhhhh26/Base` -> **Settings** -> **Secrets and variables** -> **Actions**:
+   - Thêm `SERVER_HOST`: IP máy ảo.
+   - Thêm `SERVER_USER`: `danh`
+   - Thêm `SERVER_SSH_KEY`: Nội dung file `deploy_key` (private key).
+2. Vào **Settings** -> **Actions** -> **General** -> cuộn xuống **Workflow permissions** -> chọn **Read and write permissions** -> bấm **Save**.
+3. Khi push code lên `main`, vào tab **Actions** theo dõi pipeline chạy thành công.
+   - 📸 **Lấy ảnh minh chứng**: Chụp màn hình tab Actions thành công lưu thành `screenshots/01-actions.png`.
+   - 📸 **Lấy ảnh minh chứng**: Chụp màn hình GitHub Packages (GHCR) với 2 tag lưu thành `screenshots/02-ghcr.png`.
 
 ---
 
-## 4. Hướng dẫn chụp 4 ảnh minh chứng nộp bài (Phần 5 - 10 điểm)
+### [PHẦN 5 - 10 ĐIỂM] NỘP ẢNH MINH CHỨNG
+*(Đối chiếu: **Ảnh 4, Ảnh 9, Ảnh 10** trong đề thi)*
 
-| File ảnh minh chứng | Mô tả nội dung cần chụp |
-|---------------------|--------------------------|
-| `screenshots/01-actions.png` | Tab GitHub Actions: run trên nhánh `main` thành công tích xanh cả `build` và `deploy`. |
-| `screenshots/02-ghcr.png` | GitHub Packages (GHCR): package image có đầy đủ 2 tag `latest` và commit SHA. |
-| `screenshots/03-compose-ps.png` | Terminal máy ảo chạy lệnh: `docker compose --env-file student.env ps` với 3 container Up. |
-| `screenshots/04-website.png` | Trình duyệt Web truy cập `http://<IP_MÁY_CHỦ>:8081` hiển thị danh sách phòng lab dạng JSON. |
+Bổ sung đầy đủ 4 ảnh minh chứng vào thư mục `screenshots/`:
 
-> **Quy trình nộp bài cuối cùng**:  
-> Sau khi có đủ 4 ảnh trên, bạn copy cả 4 file ảnh này vào thư mục `submission-content/` để nộp bài lên hệ thống RAIA theo đúng yêu cầu đề thi.
+| Tên file ảnh | Nội dung theo yêu cầu đề bài | Nguồn lấy ảnh |
+| :--- | :--- | :--- |
+| `01-actions.png` | Tab Actions: run trên `main` thành công cả `build` và `deploy`. | Chụp tab Actions trên GitHub repo. |
+| `02-ghcr.png` | Package image trên GHCR với 2 tag: commit SHA và `latest`. | Chụp trang GitHub Packages của tài khoản / repo. |
+| `03-compose-ps.png` | Kết quả lệnh `docker compose --env-file student.env ps` trên server. | Chụp cửa sổ terminal máy ảo hiển thị 3 container `Up`. |
+| `04-website.png` | Browser hiển thị danh sách phòng lab dạng JSON. | Chụp trình duyệt web truy cập `http://<IP_MÁY_ẢO>:8081`. |
 
----
-
-## 5. Các lệnh hữu ích và xử lý sự cố
-
-### 1. Dừng các container:
-```bash
-docker compose --env-file student.env down
-```
-
-### 2. Dừng và xoá dữ liệu database để reset lại:
-```bash
-docker compose --env-file student.env down -v
-```
-
-### 3. Xem log khi cần debug lỗi:
-```bash
-# Xem log toàn bộ hệ thống
-docker compose --env-file student.env logs -f
-
-# Xem log riêng backend Spring Boot
-docker compose --env-file student.env logs -f app
-
-# Xem log Nginx
-docker compose --env-file student.env logs -f nginx
-```
-
-### 4. Nếu bị lỗi cổng `8081` đã bị chiếm dụng:
-Mở file `student.env` bằng lệnh:
-```bash
-nano student.env
-```
-Đổi giá trị `APP_PORT="8081"` thành `APP_PORT="8082"` hoặc `8085`. Sau đó chạy lại:
-```bash
-docker compose --env-file student.env up -d
-```
+> 📦 **Quy trình nộp bài cuối cùng (Ảnh 4)**:  
+> Copy cả 4 file ảnh từ thư mục `screenshots/` sang thư mục `submission-content/`.  
+> Sau đó nén hoặc dùng SFTP kéo thư mục dự án về máy tính và nộp lên hệ thống thi RAIA.
